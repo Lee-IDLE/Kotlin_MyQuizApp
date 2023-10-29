@@ -1,5 +1,6 @@
 package eu.tutorials.myquizapp
 
+import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import androidx.appcompat.app.AppCompatActivity
@@ -10,13 +11,17 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 
 class QuizQuestionsActivity : AppCompatActivity(), View.OnClickListener {
 
+    private var mUserName: String? = null
+
     private var mCurrentPosition: Int = 1
     private var mQuestionList: ArrayList<Question>? = null
     private var mSelectedOptionPosition : Int = 0
+    private var mCorrectAnswer: Int = 0
 
     private var progressBar : ProgressBar? = null
     private var tvProgress : TextView? = null
@@ -32,6 +37,8 @@ class QuizQuestionsActivity : AppCompatActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_quiz_questions)
+
+        mUserName = intent.getStringExtra(Constants.USERN_NAME)
 
         progressBar = findViewById(R.id.progressBar)
         tvProgress = findViewById(R.id.tvProgress)
@@ -57,8 +64,6 @@ class QuizQuestionsActivity : AppCompatActivity(), View.OnClickListener {
     }
 
     private fun setQuestion() {
-
-
         val question: Question = mQuestionList!![mCurrentPosition - 1]
         progressBar?.progress = mCurrentPosition
         tvProgress?.text = "$mCurrentPosition / ${progressBar?.max}"
@@ -68,6 +73,19 @@ class QuizQuestionsActivity : AppCompatActivity(), View.OnClickListener {
         tvOptionTwo?.text = question.optionTwo
         tvOptionThree?.text = question.optionThree
         tvOptionFour?.text = question.optionFour
+
+        tvOptionOne?.background = ContextCompat.getDrawable(
+            this, R.drawable.default_option_border_bg
+        )
+        tvOptionTwo?.background = ContextCompat.getDrawable(
+            this, R.drawable.default_option_border_bg
+        )
+        tvOptionThree?.background = ContextCompat.getDrawable(
+            this, R.drawable.default_option_border_bg
+        )
+        tvOptionFour?.background = ContextCompat.getDrawable(
+            this, R.drawable.default_option_border_bg
+        )
 
         if(mCurrentPosition == mQuestionList!!.size){
             btnSubmit?.text = "FINISH"
@@ -133,8 +151,66 @@ class QuizQuestionsActivity : AppCompatActivity(), View.OnClickListener {
                 }
             }
             R.id.btnSubmit -> {
-                // TODO "implement btn submit"
+                if(mSelectedOptionPosition == 0){
+                    mCurrentPosition++
+
+                    when{
+                        mCurrentPosition <= mQuestionList!!.size ->{
+                            setQuestion()
+                        }
+                        else -> {
+                            val intent = Intent(this, ResultActivity::class.java)
+                            intent.putExtra(Constants.USERN_NAME, mUserName)
+                            intent.putExtra(Constants.CORRECT_ANSWER, mCorrectAnswer)
+                            intent.putExtra(Constants.TOTAL_QUESTIONS, mQuestionList?.size)
+                            startActivity(intent)
+                            finish()
+                        }
+                    }
+                }else{
+                    val question = mQuestionList?.get(mCurrentPosition - 1)
+                    if(question!!.correctAnswer != mSelectedOptionPosition){
+                        answerView(mSelectedOptionPosition, R.drawable.wrong_option_border_bg)
+                    }else{
+                        mCorrectAnswer++
+                    }
+                    answerView(question.correctAnswer, R.drawable.correct_option_border_bg)
+
+                    if(mCurrentPosition == mQuestionList!!.size){
+                        btnSubmit?.text = "FINISH"
+                    }else{
+                        btnSubmit?.text = "GO TO NEXT QUESTION"
+                    }
+
+                    mSelectedOptionPosition = 0
+                }
             }
         }
+    }
+
+    private fun answerView(answer: Int, drawbleView: Int){
+        when(answer){
+            1 -> {
+                tvOptionOne?.background = ContextCompat.getDrawable(
+                    this, drawbleView
+                )
+            }
+            2 -> {
+                tvOptionTwo?.background = ContextCompat.getDrawable(
+                    this, drawbleView
+                )
+            }
+            3 -> {
+                tvOptionThree?.background = ContextCompat.getDrawable(
+                    this, drawbleView
+                )
+            }
+            4 -> {
+                tvOptionFour?.background = ContextCompat.getDrawable(
+                    this, drawbleView
+                )
+            }
+        }
+
     }
 }
